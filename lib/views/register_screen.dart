@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:myberikan/views/register_screen.dart'; // sesuaikan nama package
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _idKaryawanController = TextEditingController();
+  final TextEditingController _googleController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -27,38 +32,44 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _idKaryawanController.dispose();
+    _googleController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _onMasuk() {
+  void _onDaftar() {
+    final idKaryawan = _idKaryawanController.text.trim();
+    final google = _googleController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nama pengguna dan kata sandi wajib diisi.'),
-        ),
-      );
+    if (idKaryawan.isEmpty ||
+        google.isEmpty ||
+        username.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Semua field wajib diisi.')));
       return;
     }
 
-    // TODO: tambahkan logika login
-    // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(builder: (_) => const HomeScreen()),
-    // );
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Kata sandi tidak cocok.')));
+      return;
+    }
+
+    // TODO: tambahkan logika registrasi
   }
 
-  void _onLupaKataSandi() {
-    // TODO: navigasi ke halaman lupa kata sandi
-  }
-
-  void _onDaftar() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+  void _onMasuk() {
+    Navigator.of(context).pop();
   }
 
   @override
@@ -71,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 48),
 
               // Logo
               Center(
@@ -82,14 +93,37 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 52),
+              const SizedBox(height: 36),
+
+              // ID Karyawan
+              _buildLabel('ID Karyawan'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _idKaryawanController,
+                hint: 'ID karyawan',
+                obscure: false,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Akun Google
+              _buildLabel('Akun Google'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _googleController,
+                hint: 'Masukan akun google anda',
+                obscure: false,
+                keyboardType: TextInputType.emailAddress,
+              ),
+
+              const SizedBox(height: 20),
 
               // Nama Pengguna
               _buildLabel('Nama Pengguna'),
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _usernameController,
-                hint: 'Masukkan Nama Pengguna',
+                hint: 'Masukkan  Nama Pengguna',
                 obscure: false,
               ),
 
@@ -109,34 +143,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-              // Lupa kata sandi
-              GestureDetector(
-                onTap: _onLupaKataSandi,
-                child: const Text(
-                  'Lupa kata sandi?',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                    color: Color(0xFF4A80C4),
+              // Konfirmasi Kata Sandi
+              _buildLabel('Konfirmasi Kata Sandi'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                hint: 'Masukkan kata sandi',
+                obscure: _obscureConfirmPassword,
+                suffixIcon: _eyeIcon(
+                  obscure: _obscureConfirmPassword,
+                  onTap: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
                   ),
                 ),
               ),
 
               const SizedBox(height: 28),
 
-              // Tombol Masuk
-              _buildButton(label: 'Masuk', onTap: _onMasuk),
+              // Tombol Daftar
+              _buildButton(label: 'Daftar', onTap: _onDaftar),
 
               const SizedBox(height: 24),
 
-              // Belum punya akun?
+              // Sudah punya akun?
               _buildBottomText(
-                normal: 'Belum punya akun? ',
-                action: 'Daftar',
-                onTap: _onDaftar,
+                normal: 'Sudah punya akun? ',
+                action: 'Masuk',
+                onTap: _onMasuk,
               ),
 
               const SizedBox(height: 32),
@@ -164,6 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required bool obscure,
     Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -180,6 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextField(
         controller: controller,
         obscureText: obscure,
+        keyboardType: keyboardType,
         style: const TextStyle(
           fontFamily: 'Poppins',
           fontSize: 14,
