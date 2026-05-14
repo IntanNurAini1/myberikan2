@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myberikan/views/dashboard_HR.dart';
 import 'package:myberikan/views/splash_screen.dart'; // sesuaikan nama package
 
 void main() {
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A80C4)),
         fontFamily: 'Poppins',
       ),
-      home: const SplashScreen(),
+      home: DashboardHr(),
     );
   }
 }
