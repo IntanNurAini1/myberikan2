@@ -9,6 +9,24 @@ class AuthController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // VALIDASI PASSWORD
+  bool _isValidPassword(String password) {
+    final regex = RegExp(
+      r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[@!#\$&*~]).{8,}$',
+    );
+
+    return regex.hasMatch(password);
+  }
+
+  // VALIDASI GMAIL
+  bool _isValidGmail(String email) {
+    final regex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@gmail\.com$',
+    );
+
+    return regex.hasMatch(email);
+  }
+
   // ─────────────────────────────────────────────
   // REGISTER
   // ─────────────────────────────────────────────
@@ -29,11 +47,25 @@ class AuthController {
     required String password,
   }) async {
     // 1. Cek karyawan ada di Firestore
+
+    if (!_isValidGmail(emailPemulihan)) {
+      throw AuthException(
+        'Gunakan akun Google yang valid (@gmail.com).',
+      );
+    }
+
+  // VALIDASI PASSWORD
+    if (!_isValidPassword(password)) {
+      throw AuthException(
+        'Kata sandi minimal 8 karakter, mengandung huruf kapital, angka, dan simbol spesial.',
+      );
+    }
+
     final karyawanDoc =
         await _firestore.collection('karyawan').doc(nip).get();
 
     if (!karyawanDoc.exists) {
-      throw AuthException('ID Karyawan tidak ditemukan. Hubungi admin.');
+      throw AuthException('ID Karyawan tidak ditemukan.');
     }
 
     final karyawan = KaryawanModel.fromMap(
