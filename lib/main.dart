@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:myberikan/views/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'firebase_options.dart';
+import 'package:myberikan/views/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   runApp(const MyApp());
 }
 
@@ -21,16 +22,24 @@ class MyApp extends StatelessWidget {
       title: 'Berikan Bahari Indonesia',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A80C4)),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF4A80C4),
+        ),
         fontFamily: 'Poppins',
       ),
+
       localizationsDelegates: const [
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: const [Locale('id', 'ID')],
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+
+      supportedLocales: const [
+        Locale('id', 'ID'),
+      ],
+
       home: const SplashScreen(),
+      // home: DashboardHr(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dashboard_hr.dart';
 
 import '../controllers/auth_controller.dart';
 import 'register_screen.dart';
@@ -39,33 +40,46 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _onMasuk() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      _showSnack('Nama pengguna dan kata sandi wajib diisi.');
-      return;
+  if (username.isEmpty || password.isEmpty) {
+    _showSnack('Nama pengguna dan kata sandi wajib diisi.');
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final result = await _controller.login(
+      username: username,
+      password: password,
+    );
+
+    final role = result['role'];
+
+    if (!mounted) return;
+
+    if (role == 'HR') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const DashboardHr(),
+        ),
+      );
+    } else {
+      _showSnack('Role tidak memiliki akses.');
     }
-
-    setState(() => _isLoading = true);
-
-    try {
-      await _controller.login(username: username, password: password);
-
-      if (!mounted) return;
-
-      // TODO: ganti dengan navigasi ke HomeScreen
-      // Navigator.of(context).pushReplacement(
-      //   MaterialPageRoute(builder: (_) => const HomeScreen()),
-      // );
-    } on AuthException catch (e) {
-      _showSnack(e.message);
-    } catch (_) {
-      _showSnack('Terjadi kesalahan. Silakan coba lagi.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+  } on AuthException catch (e) {
+    _showSnack(e.message);
+  } catch (_) {
+    _showSnack('Terjadi kesalahan.');
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   void _onLupaKataSandi() {
     // TODO: navigasi ke halaman lupa kata sandi

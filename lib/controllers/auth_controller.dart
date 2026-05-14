@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-
 import '../models/karyawan_model.dart';
 import '../models/user_model.dart';
 
@@ -12,7 +10,7 @@ class AuthController {
   // VALIDASI PASSWORD
   bool _isValidPassword(String password) {
     final regex = RegExp(
-      r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[@!#\$&*~]).{8,}$',
+      r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[@!]).{8,}$',
     );
 
     return regex.hasMatch(password);
@@ -57,7 +55,7 @@ class AuthController {
   // VALIDASI PASSWORD
     if (!_isValidPassword(password)) {
       throw AuthException(
-        'Kata sandi minimal 8 karakter, mengandung huruf kapital, angka, dan simbol spesial.',
+        'Kata sandi minimal 8 karakter, mengandung huruf kapital, angka, dan simbol spesial(@!).',
       );
     }
 
@@ -68,9 +66,9 @@ class AuthController {
       throw AuthException('ID Karyawan tidak ditemukan.');
     }
 
-    final karyawan = KaryawanModel.fromMap(
-      karyawanDoc.data() as Map<String, dynamic>,
-    );
+    // final karyawan = KaryawanModel.fromMap(
+    //   karyawanDoc.data() as Map<String, dynamic>,
+    // );
 
     // 2. Pastikan NIP belum punya akun
     final nipAlreadyUsed = await _firestore
@@ -137,36 +135,51 @@ class AuthController {
   /// 2. Ambil [emailPemulihan] dari dokumen tersebut.
   /// 3. Login ke Firebase Auth dengan email + password.
   /// 4. Kembalikan [UserModel] aktif.
-  Future<UserModel> login({
-    required String username,
-    required String password,
-  }) async {
-    // 1. Cari user berdasarkan username
-    final query = await _firestore
-        .collection('users')
-        .where('username', isEqualTo: username)
-        .limit(1)
-        .get();
+Future<Map<String, dynamic>> login({
+  required String username,
+  required String password,
+}) async {
+  // Cari user berdasarkan username
+  final query = await _firestore
+      .collection('users')
+      .where('username', isEqualTo: username)
+      .limit(1)
+      .get();
 
-    if (query.docs.isEmpty) {
-      throw AuthException('Nama pengguna tidak ditemukan.');
-    }
-
-    final userDoc = query.docs.first;
-    final userModel = UserModel.fromMap(userDoc.data());
-
-    // 2. Login ke Firebase Auth pakai emailPemulihan
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: userModel.emailPemulihan,
-        password: password,
-      );
-    } on FirebaseAuthException catch (e) {
-      throw AuthException(_authErrorMessage(e.code));
-    }
-
-    return userModel;
+  if (query.docs.isEmpty) {
+    throw AuthException('Nama pengguna tidak ditemukan.');
   }
+
+  final userDoc = query.docs.first;
+  final userModel = UserModel.fromMap(userDoc.data());
+
+  // Login Firebase Auth
+  try {
+    await _auth.signInWithEmailAndPassword(
+      email: userModel.emailPemulihan,
+      password: password,
+    );
+  } on FirebaseAuthException catch (e) {
+    throw AuthException(_authErrorMessage(e.code));
+  }
+
+  // Ambil data karyawan
+  final karyawanDoc = await _firestore
+      .collection('karyawan')
+      .doc(userModel.nip)
+      .get();
+
+  if (!karyawanDoc.exists) {
+    throw AuthException('Data karyawan tidak ditemukan.');
+  }
+
+  final karyawanData = karyawanDoc.data()!;
+
+  return {
+    'user': userModel,
+    'role': karyawanData['role'],
+  };
+}
 
   // ─────────────────────────────────────────────
   // LOGOUT

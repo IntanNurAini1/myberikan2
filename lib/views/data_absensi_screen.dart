@@ -80,7 +80,6 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      locale: const Locale('id', 'ID'),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -276,13 +275,11 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _isToday ? 'hh/bb/tttt' : _formattedDate,
-              style: TextStyle(
+              _formattedDate,
+              style: const TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 13,
-                color: _isToday
-                    ? const Color(0xFFB0B0B0)
-                    : const Color(0xFF1A1A2E),
+                color: Color(0xFF1A1A2E),
                 fontWeight: FontWeight.w500,
               ),
             ),
