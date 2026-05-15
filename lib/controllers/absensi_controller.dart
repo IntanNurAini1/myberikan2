@@ -33,7 +33,7 @@ class AbsensiController {
     final menit = now.minute;
     final totalMenit = jam * 60 + menit;
 
-    const buka = 5 * 60;       // 05:00
+    const buka = 1 * 60;       // 05:00
     const batasHadir = 8 * 60; // 08:00
     const tutup = 23 * 60;     // 10:00
 

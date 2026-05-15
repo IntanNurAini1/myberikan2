@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-
+import 'dart:convert';
 import '../controllers/kehadiran_controller.dart';
 
 class DataAbsensiScreen extends StatefulWidget {
@@ -44,8 +44,7 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final data =
-          await _controller.getKehadiranByTanggal(_selectedDate);
+      final data = await _controller.getKehadiranByTanggal(_selectedDate);
       setState(() {
         _allData = data;
         _applySearch();
@@ -106,11 +105,9 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
 
   // ── Format helpers ──
 
-  String get _formattedDate =>
-      DateFormat('dd/MM/yyyy').format(_selectedDate);
+  String get _formattedDate => DateFormat('dd/MM/yyyy').format(_selectedDate);
 
-  String _formatWaktu(DateTime dt) =>
-      DateFormat('HH:mm').format(dt) + ' WIB';
+  String _formatWaktu(DateTime dt) => DateFormat('HH:mm').format(dt) + ' WIB';
 
   bool get _isToday {
     final now = DateTime.now();
@@ -131,8 +128,11 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFF1A1A2E), size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF1A1A2E),
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -169,25 +169,24 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF4A80C4),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF4A80C4)),
                   )
                 : _filteredData.isEmpty
-                    ? _buildEmptyState()
-                    : RefreshIndicator(
-                        color: const Color(0xFF4A80C4),
-                        onRefresh: _loadData,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4),
-                          itemCount: _filteredData.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (_, index) =>
-                              _buildCard(_filteredData[index]),
-                        ),
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    color: const Color(0xFF4A80C4),
+                    onRefresh: _loadData,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 4,
                       ),
+                      itemCount: _filteredData.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (_, index) =>
+                          _buildCard(_filteredData[index]),
+                    ),
+                  ),
           ),
 
           const SizedBox(height: 16),
@@ -233,8 +232,11 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: Color(0xFFB0B0B0), size: 20),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFFB0B0B0),
+                    size: 20,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                     _onSearchChanged('');
@@ -247,8 +249,10 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
@@ -258,8 +262,7 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
     return GestureDetector(
       onTap: _pickDate,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -320,14 +323,19 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
               color: const Color(0xFFDDE6F5),
               image: item.karyawan.fotoProfil.isNotEmpty
                   ? DecorationImage(
-                      image: NetworkImage(item.karyawan.fotoProfil),
+                      image: MemoryImage(
+                        base64Decode(item.karyawan.fotoProfil),
+                      ),
                       fit: BoxFit.cover,
                     )
                   : null,
             ),
             child: item.karyawan.fotoProfil.isEmpty
-                ? const Icon(Icons.person_rounded,
-                    color: Color(0xFF4A80C4), size: 28)
+                ? const Icon(
+                    Icons.person_rounded,
+                    color: Color(0xFF4A80C4),
+                    size: 28,
+                  )
                 : null,
           ),
 
@@ -401,8 +409,7 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
     }
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
@@ -425,8 +432,7 @@ class _DataAbsensiScreenState extends State<DataAbsensiScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.event_busy_rounded,
-              size: 56, color: Colors.grey.shade300),
+          Icon(Icons.event_busy_rounded, size: 56, color: Colors.grey.shade300),
           const SizedBox(height: 12),
           Text(
             _searchQuery.isNotEmpty

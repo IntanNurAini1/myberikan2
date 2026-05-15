@@ -310,11 +310,29 @@ class _AjukanCutiScreenState extends State<AjukanCutiScreen> {
 
                       Row(
                         children: [
-                          const CircleAvatar(
+                          CircleAvatar(
                             radius: 25,
-                            backgroundImage: AssetImage(
-                              "assets/images/profile 1.png",
-                            ),
+                            backgroundImage:
+                                karyawanData?['foto_profil'] != null &&
+                                    karyawanData!['foto_profil']
+                                        .toString()
+                                        .isNotEmpty
+                                ? MemoryImage(
+                                    base64Decode(
+                                      karyawanData!['foto_profil']
+                                          .toString()
+                                          .split(',')
+                                          .last,
+                                    ),
+                                  )
+                                : null,
+                            child:
+                                karyawanData?['foto_profil'] == null ||
+                                    karyawanData!['foto_profil']
+                                        .toString()
+                                        .isEmpty
+                                ? const Icon(Icons.person)
+                                : null,
                           ),
                           const SizedBox(width: 20),
                           Text(
