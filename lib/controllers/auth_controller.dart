@@ -1,3 +1,6 @@
+// auth_controller.dart — UPDATED
+// Sudah include fungsi-fungsi KARYAWAN (lihat bagian KARYAWAN CRUD di bawah)
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/karyawan_model.dart';
@@ -9,19 +12,13 @@ class AuthController {
 
   // VALIDASI PASSWORD
   bool _isValidPassword(String password) {
-    final regex = RegExp(
-      r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[@!]).{8,}$',
-    );
-
+    final regex = RegExp(r'^(?=.*[A-Z])(?=.*[0-9])(?=.*[@!]).{8,}$');
     return regex.hasMatch(password);
   }
 
   // VALIDASI GMAIL
   bool _isValidGmail(String email) {
-    final regex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@gmail\.com$',
-    );
-
+    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$');
     return regex.hasMatch(email);
   }
 
@@ -29,48 +26,27 @@ class AuthController {
   // REGISTER
   // ─────────────────────────────────────────────
 
-  /// Mendaftarkan karyawan baru.
-  ///
-  /// Alur:
-  /// 1. Cek dokumen karyawan di collection `karyawan` (doc id = nip).
-  /// 2. Cek username belum dipakai di collection `users`.
-  /// 3. Buat akun Firebase Auth dengan [emailPemulihan] + [password].
-  /// 4. Simpan dokumen baru ke collection `users`.
-  ///
-  /// Melempar [AuthException] bila ada kesalahan yang bisa ditampilkan ke UI.
   Future<UserModel> register({
     required String nip,
     required String emailPemulihan,
     required String username,
     required String password,
   }) async {
-    // 1. Cek karyawan ada di Firestore
-
     if (!_isValidGmail(emailPemulihan)) {
-      throw AuthException(
-        'Gunakan akun Google yang valid (@gmail.com).',
-      );
+      throw AuthException('Gunakan akun Google yang valid (@gmail.com).');
     }
 
-  // VALIDASI PASSWORD
     if (!_isValidPassword(password)) {
       throw AuthException(
         'Kata sandi minimal 8 karakter, mengandung huruf kapital, angka, dan simbol spesial(@!).',
       );
     }
 
-    final karyawanDoc =
-        await _firestore.collection('karyawan').doc(nip).get();
-
+    final karyawanDoc = await _firestore.collection('karyawan').doc(nip).get();
     if (!karyawanDoc.exists) {
       throw AuthException('ID Karyawan tidak ditemukan.');
     }
 
-    // final karyawan = KaryawanModel.fromMap(
-    //   karyawanDoc.data() as Map<String, dynamic>,
-    // );
-
-    // 2. Pastikan NIP belum punya akun
     final nipAlreadyUsed = await _firestore
         .collection('users')
         .where('nip', isEqualTo: nip)
@@ -78,11 +54,9 @@ class AuthController {
         .get();
 
     if (nipAlreadyUsed.docs.isNotEmpty) {
-      throw AuthException(
-          'ID Karyawan ini sudah terdaftar. Silakan masuk.');
+      throw AuthException('ID Karyawan ini sudah terdaftar. Silakan masuk.');
     }
 
-    // 3. Pastikan username belum dipakai
     final usernameQuery = await _firestore
         .collection('users')
         .where('username', isEqualTo: username)
@@ -90,11 +64,9 @@ class AuthController {
         .get();
 
     if (usernameQuery.docs.isNotEmpty) {
-      throw AuthException(
-          'Nama pengguna sudah digunakan. Pilih nama lain.');
+      throw AuthException('Nama pengguna sudah digunakan. Pilih nama lain.');
     }
 
-    // 4. Buat akun Firebase Auth
     UserCredential credential;
     try {
       credential = await _auth.createUserWithEmailAndPassword(
@@ -106,8 +78,6 @@ class AuthController {
     }
 
     final uid = credential.user!.uid;
-
-    // 5. Simpan ke collection `users`
     final newUser = UserModel(
       uid: uid,
       nip: nip,
@@ -115,12 +85,7 @@ class AuthController {
       emailPemulihan: emailPemulihan,
     );
 
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .set(newUser.toMap());
-
-    // Kembalikan UserModel agar view bisa langsung dipakai
+    await _firestore.collection('users').doc(uid).set(newUser.toMap());
     return newUser;
   }
 
@@ -128,58 +93,45 @@ class AuthController {
   // LOGIN
   // ─────────────────────────────────────────────
 
-  /// Masuk menggunakan [username] + [password].
-  ///
-  /// Alur:
-  /// 1. Cari dokumen `users` yang username-nya cocok.
-  /// 2. Ambil [emailPemulihan] dari dokumen tersebut.
-  /// 3. Login ke Firebase Auth dengan email + password.
-  /// 4. Kembalikan [UserModel] aktif.
-Future<Map<String, dynamic>> login({
-  required String username,
-  required String password,
-}) async {
-  // Cari user berdasarkan username
-  final query = await _firestore
-      .collection('users')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get();
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
+    final query = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get();
 
-  if (query.docs.isEmpty) {
-    throw AuthException('Nama pengguna tidak ditemukan.');
+    if (query.docs.isEmpty) {
+      throw AuthException('Nama pengguna tidak ditemukan.');
+    }
+
+    final userDoc = query.docs.first;
+    final userModel = UserModel.fromMap(userDoc.data());
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: userModel.emailPemulihan,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_authErrorMessage(e.code));
+    }
+
+    final karyawanDoc =
+        await _firestore.collection('karyawan').doc(userModel.nip).get();
+
+    if (!karyawanDoc.exists) {
+      throw AuthException('Data karyawan tidak ditemukan.');
+    }
+
+    final karyawanData = karyawanDoc.data()!;
+    return {
+      'user': userModel,
+      'role': karyawanData['role'],
+    };
   }
-
-  final userDoc = query.docs.first;
-  final userModel = UserModel.fromMap(userDoc.data());
-
-  // Login Firebase Auth
-  try {
-    await _auth.signInWithEmailAndPassword(
-      email: userModel.emailPemulihan,
-      password: password,
-    );
-  } on FirebaseAuthException catch (e) {
-    throw AuthException(_authErrorMessage(e.code));
-  }
-
-  // Ambil data karyawan
-  final karyawanDoc = await _firestore
-      .collection('karyawan')
-      .doc(userModel.nip)
-      .get();
-
-  if (!karyawanDoc.exists) {
-    throw AuthException('Data karyawan tidak ditemukan.');
-  }
-
-  final karyawanData = karyawanDoc.data()!;
-
-  return {
-    'user': userModel,
-    'role': karyawanData['role'],
-  };
-}
 
   // ─────────────────────────────────────────────
   // LOGOUT
@@ -193,11 +145,125 @@ Future<Map<String, dynamic>> login({
   // HELPER: ambil data karyawan dari NIP
   // ─────────────────────────────────────────────
 
-  /// Dipakai view lain kalau butuh data profil karyawan.
   Future<KaryawanModel?> getKaryawan(String nip) async {
     final doc = await _firestore.collection('karyawan').doc(nip).get();
     if (!doc.exists) return null;
     return KaryawanModel.fromMap(doc.data() as Map<String, dynamic>);
+  }
+
+  // ─────────────────────────────────────────────
+  // KARYAWAN CRUD
+  // ─────────────────────────────────────────────
+
+  /// Mendapatkan semua karyawan, opsional filter divisi.
+  Future<List<KaryawanModel>> getKaryawanList({String? divisi}) async {
+    Query<Map<String, dynamic>> query = _firestore.collection('karyawan');
+
+    if (divisi != null &&
+        divisi.isNotEmpty &&
+        divisi != 'Semua Divisi') {
+      query = query.where('divisi', isEqualTo: divisi);
+    }
+
+    final snapshot = await query.get();
+    return snapshot.docs
+        .map((doc) => KaryawanModel.fromMap(doc.data()))
+        .toList();
+  }
+
+  /// Stream karyawan real-time.
+  Stream<List<KaryawanModel>> getKaryawanStream() {
+    return _firestore.collection('karyawan').snapshots().map(
+          (snap) => snap.docs
+              .map((doc) => KaryawanModel.fromMap(doc.data()))
+              .toList(),
+        );
+  }
+
+  /// Daftar divisi unik dari semua karyawan.
+  Future<List<String>> getDivisiList() async {
+    final snapshot = await _firestore.collection('karyawan').get();
+    final divisiSet = snapshot.docs
+        .map((doc) => (doc.data()['divisi'] ?? '') as String)
+        .where((d) => d.isNotEmpty)
+        .toSet();
+    return ['Semua Divisi', ...divisiSet.toList()..sort()];
+  }
+
+  /// Tambah karyawan baru ke Firestore.
+  Future<void> addKaryawan({
+    required String nip,
+    required String nama,
+    required String jabatan,
+    required String divisi,
+    required int jatahCutiTahunan,
+    String fotoProfil = '',
+  }) async {
+    if (nip.isEmpty) throw AuthException('ID Karyawan tidak boleh kosong.');
+    if (nama.isEmpty) throw AuthException('Nama tidak boleh kosong.');
+    if (jabatan.isEmpty) throw AuthException('Jabatan tidak boleh kosong.');
+    if (divisi.isEmpty || divisi == 'Pilih Divisi') {
+      throw AuthException('Silakan pilih divisi.');
+    }
+    if (jatahCutiTahunan < 0) {
+      throw AuthException('Jatah cuti tidak boleh negatif.');
+    }
+
+    final existing = await _firestore.collection('karyawan').doc(nip).get();
+    if (existing.exists) {
+      throw AuthException('ID Karyawan sudah terdaftar.');
+    }
+
+    final newKaryawan = KaryawanModel(
+      nip: nip,
+      nama: nama,
+      divisi: divisi,
+      role: jabatan,
+      jatahCutiTahunan: jatahCutiTahunan,
+      fotoProfil: fotoProfil,
+    );
+
+    await _firestore
+        .collection('karyawan')
+        .doc(nip)
+        .set(newKaryawan.toMap());
+  }
+
+  /// Update data karyawan yang sudah ada (NIP tidak bisa diubah).
+  Future<void> updateKaryawan({
+    required String nip,
+    required String nama,
+    required String jabatan,
+    required String divisi,
+    required int jatahCutiTahunan,
+    String? fotoProfil,
+  }) async {
+    if (nama.isEmpty) throw AuthException('Nama tidak boleh kosong.');
+    if (jabatan.isEmpty) throw AuthException('Jabatan tidak boleh kosong.');
+    if (divisi.isEmpty || divisi == 'Pilih Divisi') {
+      throw AuthException('Silakan pilih divisi.');
+    }
+    if (jatahCutiTahunan < 0) {
+      throw AuthException('Jatah cuti tidak boleh negatif.');
+    }
+
+    final Map<String, dynamic> updates = {
+      'nama': nama,
+      'role': jabatan,
+      'divisi': divisi,
+      'jatah_cuti_tahunan': jatahCutiTahunan,
+    };
+
+    if (fotoProfil != null) {
+      updates['foto_profil'] = fotoProfil;
+    }
+
+    await _firestore.collection('karyawan').doc(nip).update(updates);
+  }
+
+  /// Hapus karyawan berdasarkan NIP.
+  Future<void> deleteKaryawan(String nip) async {
+    await _firestore.collection('karyawan').doc(nip).delete();
   }
 
   // ─────────────────────────────────────────────
@@ -227,7 +293,7 @@ Future<Map<String, dynamic>> login({
 }
 
 // ─────────────────────────────────────────────
-// Custom exception agar view tinggal catch satu tipe
+// Custom exception
 // ─────────────────────────────────────────────
 
 class AuthException implements Exception {
