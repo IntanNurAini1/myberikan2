@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "542970368595",
+    "project_id": "myberikan2-d4a1c",
+    "storage_bucket": "myberikan2-d4a1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542970368595:android:dde968308461f6b9ae2ca6",
+        "android_client_info": {
+          "package_name": "com.example.myberikan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "542970368595-03bk8nsb74dg0tsq4rujdmm8gksbhs32.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzcbLaTAB4H6aal6_SlTXXjAelEPn8C4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "542970368595-03bk8nsb74dg0tsq4rujdmm8gksbhs32.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "542970368595-m0rf1gvg4hq7vvec545dom0k639n2kp5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myberikan"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

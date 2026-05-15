@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// import 'package:myberikan/views/pengajuan_cuti_screen.dart';
+import 'package:myberikan/views/data_absensi_screen.dart';
 import 'package:myberikan/views/riwayat_pengajuan_cuti_screen.dart';
 
 void main() {
@@ -275,7 +277,7 @@ class HRDashboardScreen extends StatelessWidget {
         'label': 'Data Absensi',
         'onTap': () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const RiwayatPengajuanScreen()),
+          MaterialPageRoute(builder: (_) => const DataAbsensiScreen()),
         ),
       },
       {

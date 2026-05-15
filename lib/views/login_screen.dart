@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:myberikan/views/register_screen.dart'; // sesuaikan nama package
+import 'dashboard_hr.dart';
+
+import '../controllers/auth_controller.dart';
+import 'register_screen.dart';
+// import 'home_screen.dart'; // uncomment saat HomeScreen sudah ada
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,9 +14,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _controller = AuthController();
+
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -32,33 +39,63 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onMasuk() {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+  Future<void> _onMasuk() async {
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Nama pengguna dan kata sandi wajib diisi.'),
+  if (username.isEmpty || password.isEmpty) {
+    _showSnack('Nama pengguna dan kata sandi wajib diisi.');
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final result = await _controller.login(
+      username: username,
+      password: password,
+    );
+
+    final role = result['role'];
+
+    if (!mounted) return;
+
+    if (role == 'HR') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const DashboardHr(),
         ),
       );
-      return;
+    } else {
+      _showSnack('Role tidak memiliki akses.');
     }
-
-    // TODO: tambahkan logika login
-    // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(builder: (_) => const HomeScreen()),
-    // );
+  } on AuthException catch (e) {
+    _showSnack(e.message);
+  } catch (_) {
+    _showSnack('Terjadi kesalahan.');
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
+}
 
   void _onLupaKataSandi() {
     // TODO: navigasi ke halaman lupa kata sandi
+    // Bisa pakai _controller._auth.sendPasswordResetEmail(email: emailPemulihan)
+    // setelah user memasukkan username → cari emailPemulihan dulu di Firestore
   }
 
   void _onDaftar() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+  }
+
+  void _showSnack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -73,7 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 60),
 
-              // Logo
               Center(
                 child: Image.asset(
                   'assets/images/logo.png',
@@ -84,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 52),
 
-              // Nama Pengguna
               _buildLabel('Nama Pengguna'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -95,7 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              // Kata Sandi
               _buildLabel('Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -111,7 +145,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 10),
 
-              // Lupa kata sandi
               GestureDetector(
                 onTap: _onLupaKataSandi,
                 child: const Text(
@@ -127,12 +160,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 28),
 
-              // Tombol Masuk
-              _buildButton(label: 'Masuk', onTap: _onMasuk),
+              _buildButton(
+                label: _isLoading ? 'Masuk...' : 'Masuk',
+                onTap: _isLoading ? null : _onMasuk,
+              ),
 
               const SizedBox(height: 24),
 
-              // Belum punya akun?
               _buildBottomText(
                 normal: 'Belum punya akun? ',
                 action: 'Daftar',
@@ -147,17 +181,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontFamily: 'Poppins',
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
-        color: Color(0xFF1A1A2E),
-      ),
-    );
-  }
+  // ── Widgets helper ──
+
+  Widget _buildLabel(String text) => Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          color: Color(0xFF1A1A2E),
+        ),
+      );
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -209,18 +243,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _eyeIcon({required bool obscure, required VoidCallback onTap}) {
-    return IconButton(
-      icon: Icon(
-        obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        color: const Color(0xFF9E9E9E),
-        size: 20,
-      ),
-      onPressed: onTap,
-    );
-  }
+  Widget _eyeIcon({required bool obscure, required VoidCallback onTap}) =>
+      IconButton(
+        icon: Icon(
+          obscure
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+          color: const Color(0xFF9E9E9E),
+          size: 20,
+        ),
+        onPressed: onTap,
+      );
 
-  Widget _buildButton({required String label, required VoidCallback onTap}) {
+  Widget _buildButton(
+      {required String label, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 52,

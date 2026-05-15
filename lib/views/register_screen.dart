@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../controllers/auth_controller.dart';
+// import '../views/home_screen.dart'; // uncomment saat HomeScreen sudah ada
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -9,6 +12,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _controller = AuthController();
+
   final TextEditingController _idKaryawanController = TextEditingController();
   final TextEditingController _googleController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -18,6 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -40,36 +46,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _onDaftar() {
-    final idKaryawan = _idKaryawanController.text.trim();
-    final google = _googleController.text.trim();
+  Future<void> _onDaftar() async {
+    final nip = _idKaryawanController.text.trim();
+    final emailPemulihan = _googleController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (idKaryawan.isEmpty ||
-        google.isEmpty ||
+    // Validasi lokal
+    if (nip.isEmpty ||
+        emailPemulihan.isEmpty ||
         username.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Semua field wajib diisi.')));
+      _showSnack('Semua field wajib diisi.');
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Kata sandi tidak cocok.')));
+      _showSnack('Kata sandi tidak cocok.');
       return;
     }
 
-    // TODO: tambahkan logika registrasi
+    setState(() => _isLoading = true);
+
+    try {
+      await _controller.register(
+        nip: nip,
+        emailPemulihan: emailPemulihan,
+        username: username,
+        password: password,
+      );
+
+      if (!mounted) return;
+      _showSnack('Registrasi berhasil! Silakan masuk.');
+      Navigator.of(context).pop(); // kembali ke LoginScreen
+    } on AuthException catch (e) {
+      _showSnack(e.message);
+    } catch (_) {
+      _showSnack('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  void _onMasuk() {
-    Navigator.of(context).pop();
+  void _onMasuk() => Navigator.of(context).pop();
+
+  void _showSnack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -84,7 +110,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const SizedBox(height: 48),
 
-              // Logo
               Center(
                 child: Image.asset(
                   'assets/images/logo.png',
@@ -95,7 +120,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 36),
 
-              // ID Karyawan
               _buildLabel('ID Karyawan'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -106,7 +130,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // Akun Google
               _buildLabel('Akun Google'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -118,18 +141,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // Nama Pengguna
               _buildLabel('Nama Pengguna'),
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _usernameController,
-                hint: 'Masukkan  Nama Pengguna',
+                hint: 'Masukkan Nama Pengguna',
                 obscure: false,
               ),
 
               const SizedBox(height: 20),
 
-              // Kata Sandi
               _buildLabel('Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -145,7 +166,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 20),
 
-              // Konfirmasi Kata Sandi
               _buildLabel('Konfirmasi Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
@@ -155,19 +175,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 suffixIcon: _eyeIcon(
                   obscure: _obscureConfirmPassword,
                   onTap: () => setState(
-                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    () =>
+                        _obscureConfirmPassword = !_obscureConfirmPassword,
                   ),
                 ),
               ),
 
               const SizedBox(height: 28),
 
-              // Tombol Daftar
-              _buildButton(label: 'Daftar', onTap: _onDaftar),
+              _buildButton(
+                label: _isLoading ? 'Mendaftarkan...' : 'Daftar',
+                onTap: _isLoading ? null : _onDaftar,
+              ),
 
               const SizedBox(height: 24),
 
-              // Sudah punya akun?
               _buildBottomText(
                 normal: 'Sudah punya akun? ',
                 action: 'Masuk',
@@ -182,17 +204,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontFamily: 'Poppins',
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
-        color: Color(0xFF1A1A2E),
-      ),
-    );
-  }
+  // ── Widgets helper (sama persis dengan versi asal) ──
+
+  Widget _buildLabel(String text) => Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          color: Color(0xFF1A1A2E),
+        ),
+      );
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -246,18 +268,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _eyeIcon({required bool obscure, required VoidCallback onTap}) {
-    return IconButton(
-      icon: Icon(
-        obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        color: const Color(0xFF9E9E9E),
-        size: 20,
-      ),
-      onPressed: onTap,
-    );
-  }
+  Widget _eyeIcon({required bool obscure, required VoidCallback onTap}) =>
+      IconButton(
+        icon: Icon(
+          obscure
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
+          color: const Color(0xFF9E9E9E),
+          size: 20,
+        ),
+        onPressed: onTap,
+      );
 
-  Widget _buildButton({required String label, required VoidCallback onTap}) {
+  Widget _buildButton(
+      {required String label, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 52,
