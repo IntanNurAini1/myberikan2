@@ -15,29 +15,24 @@ class KaryawanModel {
     required this.fotoProfil,
   });
 
-  factory KaryawanModel.fromMap(
-    Map<String, dynamic> data,
-  ) {
+  factory KaryawanModel.fromMap(Map<String, dynamic> data) {
     return KaryawanModel(
       nip: data['nip'] ?? '',
       nama: data['nama'] ?? '',
       divisi: data['divisi'] ?? '',
       role: data['role'] ?? '',
-      jatahCutiTahunan:
-          data['jatah_cuti_tahunan'] ?? 0,
-      fotoProfil:
-          data['foto_profil'] ?? '',
+      jatahCutiTahunan: data['jatah_cuti_tahunan'] ?? 0,
+      fotoProfil: data['foto_profil'] ?? '',
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'nip': nip,
+      // nip tidak disimpan sebagai field karena sudah jadi document ID
       'nama': nama,
       'divisi': divisi,
       'role': role,
-      'jatah_cuti_tahunan':
-          jatahCutiTahunan,
+      'jatah_cuti_tahunan': jatahCutiTahunan,
       'foto_profil': fotoProfil,
     };
   }
