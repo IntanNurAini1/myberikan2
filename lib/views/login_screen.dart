@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dashboard_hr.dart';
 
 import '../controllers/auth_controller.dart';
+import 'dashboard_hr.dart';
+import 'dashboard_karyawan_screen.dart';
 import 'register_screen.dart';
-// import 'home_screen.dart'; // uncomment saat HomeScreen sudah ada
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,51 +40,53 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _onMasuk() async {
-  final username = _usernameController.text.trim();
-  final password = _passwordController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
-  if (username.isEmpty || password.isEmpty) {
-    _showSnack('Nama pengguna dan kata sandi wajib diisi.');
-    return;
-  }
+    if (username.isEmpty || password.isEmpty) {
+      _showSnack('Nama pengguna dan kata sandi wajib diisi.');
+      return;
+    }
 
-  setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  try {
-    final result = await _controller.login(
-      username: username,
-      password: password,
-    );
-
-    final role = result['role'];
-
-    if (!mounted) return;
-
-    if (role == 'HR') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const DashboardHrScreen(),
-        ),
+    try {
+      final result = await _controller.login(
+        username: username,
+        password: password,
       );
-    } else {
-      _showSnack('Role tidak memiliki akses.');
-    }
-  } on AuthException catch (e) {
-    _showSnack(e.message);
-  } catch (_) {
-    _showSnack('Terjadi kesalahan.');
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      // role dari field 'role' di collection karyawan
+      final role = (result['role'] as String? ?? '').toUpperCase();
+
+      // Cek apakah role termasuk HR
+      final isHR = role.contains('HR');
+
+      if (isHR) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const DashboardHrScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+              builder: (_) => const DashboardKaryawanScreen()),
+          (route) => false,
+        );
+      }
+    } on AuthException catch (e) {
+      _showSnack(e.message);
+    } catch (_) {
+      _showSnack('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
-}
 
   void _onLupaKataSandi() {
     // TODO: navigasi ke halaman lupa kata sandi
-    // Bisa pakai _controller._auth.sendPasswordResetEmail(email: emailPemulihan)
-    // setelah user memasukkan username → cari emailPemulihan dulu di Firestore
   }
 
   void _onDaftar() {
@@ -181,8 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Widgets helper ──
-
   Widget _buildLabel(String text) => Text(
         text,
         style: const TextStyle(
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -243,7 +243,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _eyeIcon({required bool obscure, required VoidCallback onTap}) =>
+  Widget _eyeIcon(
+          {required bool obscure, required VoidCallback onTap}) =>
       IconButton(
         icon: Icon(
           obscure

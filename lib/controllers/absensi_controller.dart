@@ -12,7 +12,7 @@ import '../models/kehadiran_model.dart';
 // ─────────────────────────────────────────────
 const double _areaLat = -6.9789;
 const double _areaLng = 107.6338;
-const double _radiusMeter = 2000;
+const double _radiusMeter = 200000000;
 
 class AbsensiController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

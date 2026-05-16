@@ -1,25 +1,26 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:myberikan/views/verifikasi_cuti_view.dart';
+
 import '../controllers/absensi_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/kehadiran_model.dart';
 import '../models/karyawan_model.dart';
 import 'riwayat_absensi_screen.dart';
 import 'ajukan_cuti_screen.dart';
-import 'data_absensi_screen.dart';
 import 'data_karyawan_view.dart';
-import 'login_screen.dart'; // sesuaikan dengan nama file login kamu
+import 'login_screen.dart';
 
-class DashboardHrScreen extends StatefulWidget {
-  const DashboardHrScreen({super.key});
+class DashboardKaryawanScreen extends StatefulWidget {
+  const DashboardKaryawanScreen({super.key});
 
   @override
-  State<DashboardHrScreen> createState() => _DashboardHrScreenState();
+  State<DashboardKaryawanScreen> createState() =>
+      _DashboardKaryawanScreenState();
 }
 
-class _DashboardHrScreenState extends State<DashboardHrScreen> {
+class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
   final AbsensiController _absensiController = AbsensiController();
   final AuthController _authController = AuthController();
 
@@ -41,11 +42,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     try {
       final data = await _absensiController.getProfilCurrentUser();
       if (data != null && mounted) {
-        setState(() {
-          _karyawan = KaryawanModel.fromMap(data);
-        });
+        setState(() => _karyawan = KaryawanModel.fromMap(data));
       }
-
       final nip = await _absensiController.getNipCurrentUser();
       if (nip.isNotEmpty) {
         final sudah = await _absensiController.sudahAbsenHariIni(nip);
@@ -62,11 +60,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     try {
       final nip = await _absensiController.getNipCurrentUser();
       if (nip.isEmpty) return;
-
       final data = await _absensiController.getRiwayatAbsensi(
-        nip: nip,
-        limit: 5,
-      );
+          nip: nip, limit: 5);
       if (mounted) setState(() => _riwayat = data);
     } catch (e) {
       debugPrint('Error load riwayat: $e');
@@ -80,32 +75,24 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     try {
       final kehadiran = await _absensiController.absenSekarang();
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Absensi berhasil! Status: ${kehadiran.status}'),
-          backgroundColor: const Color(0xFF2E7D32),
-        ),
-      );
-
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Absensi berhasil! Status: ${kehadiran.status}'),
+        backgroundColor: const Color(0xFF2E7D32),
+      ));
       setState(() => _sudahAbsen = true);
       _loadRiwayat();
     } on AbsensiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.message),
+        backgroundColor: Colors.redAccent,
+      ));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Terjadi kesalahan: $e'),
+        backgroundColor: Colors.redAccent,
+      ));
     } finally {
       if (mounted) setState(() => _isAbsenLoading = false);
     }
@@ -113,11 +100,12 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
 
   // ── Logout ──
 
-  void _showLogoutMenu(BuildContext context) {
-    final RenderBox button =
-        context.findRenderObject() as RenderBox;
-    final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+  void _showLogoutMenu(BuildContext btnContext) {
+    final RenderBox button = btnContext.findRenderObject() as RenderBox;
+    final RenderBox overlay = Navigator.of(btnContext)
+        .overlay!
+        .context
+        .findRenderObject() as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
@@ -129,16 +117,18 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     );
 
     showMenu<String>(
-      context: context,
+      context: btnContext,
       position: position,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
       elevation: 4,
       items: [
         PopupMenuItem<String>(
           value: 'logout',
           child: Row(
             children: const [
-              Icon(Icons.logout_rounded, color: Color(0xFFEF5350), size: 20),
+              Icon(Icons.logout_rounded,
+                  color: Color(0xFFEF5350), size: 20),
               SizedBox(width: 10),
               Text(
                 'Keluar',
@@ -162,15 +152,14 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Keluar Aplikasi?',
           style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              fontSize: 16),
         ),
         content: const Text(
           'Kamu akan keluar dari akun ini.',
@@ -179,21 +168,18 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'Batal',
-              style: TextStyle(fontFamily: 'Poppins', color: Colors.grey),
-            ),
+            child: const Text('Batal',
+                style: TextStyle(
+                    fontFamily: 'Poppins', color: Colors.grey)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                color: Color(0xFFEF5350),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: const Text('Keluar',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Color(0xFFEF5350),
+                  fontWeight: FontWeight.w600,
+                )),
           ),
         ],
       ),
@@ -211,12 +197,10 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal logout: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Gagal logout: $e'),
+          backgroundColor: Colors.redAccent,
+        ));
       }
     }
   }
@@ -228,7 +212,6 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final date = DateTime(dt.year, dt.month, dt.day);
-
     if (date == today) return 'Hari ini';
     if (date == yesterday) return 'Kemarin';
     return DateFormat('d MMM', 'id_ID').format(dt);
@@ -289,9 +272,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       try {
         final bytes = base64Decode(_karyawan!.fotoProfil);
         avatar = CircleAvatar(
-          radius: 24,
-          backgroundImage: MemoryImage(bytes),
-        );
+            radius: 24, backgroundImage: MemoryImage(bytes));
       } catch (_) {
         avatar = _defaultAvatar();
       }
@@ -306,10 +287,9 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Selamat datang!',
-              style: TextStyle(fontSize: 12, color: Color(0xFF7A8FA6)),
-            ),
+            const Text('Selamat datang!',
+                style:
+                    TextStyle(fontSize: 12, color: Color(0xFF7A8FA6))),
             Text(
               _isLoadingProfil ? '...' : (_karyawan?.nama ?? '-'),
               style: const TextStyle(
@@ -321,12 +301,6 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           ],
         ),
         const Spacer(),
-        // IconButton(
-        //   onPressed: () {},
-        //   icon: const Icon(Icons.notifications_outlined,
-        //       color: Color(0xFF2B7FD4)),
-        // ),
-        // ── Tombol menu dengan popup logout ──
         Builder(
           builder: (btnContext) => IconButton(
             onPressed: () => _showLogoutMenu(btnContext),
@@ -345,7 +319,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
         color: const Color(0xFFD6E8F7),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
+      child:
+          const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
     );
   }
 
@@ -377,7 +352,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           Row(
             children: [
               Text(
-                _karyawan?.role ?? 'HR Manager',
+                _karyawan?.role ?? 'Karyawan',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -479,31 +454,23 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
                 disabledForegroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: _isAbsenLoading
                   ? const SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : Text(
-                      labelTombol,
+                          color: Colors.white, strokeWidth: 2.5))
+                  : Text(labelTombol,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
+                          fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
       ),
     );
   }
-
-  // ── Fitur Aplikasi ──
 
   Widget _buildSectionTitle(String title) {
     return Text(
@@ -516,42 +483,27 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     );
   }
 
+  // ── Fitur Aplikasi — 2 fitur pakai Row agar lebar sama dengan card lain ──
+
   Widget _buildFiturAplikasi(BuildContext context) {
     final List<_FiturItem> features = [
       _FiturItem(
         icon: Icons.calendar_today_outlined,
-        label: 'Pengajuan Cuti',
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AjukanCutiScreen())),
-      ),
-      _FiturItem(
-        icon: Icons.event_available_outlined,
-        label: 'Verifikasi Cuti',
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const VerifikasiCutiView())),
-      ),
-      _FiturItem(
-        icon: Icons.bar_chart_outlined,
-        label: 'Data Absensi',
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const DataAbsensiScreen())),
-      ),
-      _FiturItem(
-        icon: Icons.date_range_outlined,
-        label: 'Data Cuti',
+        label: 'Pengajuan\nCuti',
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const AjukanCutiScreen())),
       ),
       _FiturItem(
         icon: Icons.people_outline,
-        label: 'Data Karyawan',
+        label: 'Data\nKaryawan',
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const DataKaryawanView())),
       ),
     ];
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -563,16 +515,16 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           ),
         ],
       ),
-      child: Wrap(
-        spacing: 52,
-        runSpacing: 16,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: features.map((f) {
-          return SizedBox(
-            width: 72,
-            child: InkWell(
-              onTap: f.onTap,
-              borderRadius: BorderRadius.circular(14),
+          return InkWell(
+            onTap: f.onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: 80,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 56,
@@ -643,13 +595,15 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFF2B7FD4)),
+          child:
+              CircularProgressIndicator(color: Color(0xFF2B7FD4)),
         ),
       );
     }
 
     if (_riwayat.isEmpty) {
       return Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -659,10 +613,9 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           child: Text(
             'Belum ada riwayat absensi',
             style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 13,
-              color: Color(0xFF7A8FA6),
-            ),
+                fontFamily: 'Poppins',
+                fontSize: 13,
+                color: Color(0xFF7A8FA6)),
           ),
         ),
       );
@@ -733,16 +686,14 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
                 Text(
                   '${_formatTanggal(item.tanggalKehadiran)} • ${_formatWaktu(item.tanggalKehadiran)}',
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF2B7FD4),
-                  ),
+                      fontSize: 12, color: Color(0xFF2B7FD4)),
                 ),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: badgeBg,
               borderRadius: BorderRadius.circular(20),
@@ -763,16 +714,12 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
   }
 }
 
-// ── Helper class ──
-
 class _FiturItem {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  const _FiturItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _FiturItem(
+      {required this.icon,
+      required this.label,
+      required this.onTap});
 }

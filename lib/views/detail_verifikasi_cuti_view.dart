@@ -1,6 +1,4 @@
-// ================================
-// detail_verifikasi_cuti_view.dart  ← Halaman 2: Detail + Halaman 3: Preview Bukti
-// ================================
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -33,6 +31,66 @@ class _DetailVerifikasiCutiViewState
     extends State<DetailVerifikasiCutiView> {
   bool _showBuktiPreview = false;
 
+  static bool _isUrl(String s) =>
+      s.startsWith('http://') || s.startsWith('https://');
+
+  static Widget _buildImage({
+    required String data,
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+    Widget Function()? fallback,
+  }) {
+    if (data.isEmpty) return fallback?.call() ?? const SizedBox.shrink();
+
+    if (_isUrl(data)) {
+      return Image.network(
+        data,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (_, __, ___) =>
+            fallback?.call() ??
+            const Icon(Icons.broken_image, color: Colors.grey),
+      );
+    }
+
+    try {
+      final bytes = base64Decode(data);
+      return Image.memory(
+        bytes,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (_, __, ___) =>
+            fallback?.call() ??
+            const Icon(Icons.broken_image, color: Colors.grey),
+      );
+    } catch (_) {
+      return fallback?.call() ??
+          const Icon(Icons.broken_image, color: Colors.grey);
+    }
+  }
+
+  static Widget _buildAvatar(KaryawanModel? k) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: const BoxDecoration(
+        color: Color(0xFFD6E8F6),
+        shape: BoxShape.circle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: k != null && k.fotoProfil.isNotEmpty
+          ? _buildImage(
+              data: k.fotoProfil,
+              fit: BoxFit.cover,
+              fallback: () => const _AvatarFallback(),
+            )
+          : const _AvatarFallback(),
+    );
+  }
+
   // ─────────────────────────────────────────────
   // ACTION: Verifikasi (Setujui)
   // ─────────────────────────────────────────────
@@ -40,20 +98,22 @@ class _DetailVerifikasiCutiViewState
   Future<void> _onVerifikasi() async {
     final confirm = await _showConfirmDialog(
       title: 'Setujui Cuti',
-      message:
-          'Apakah kamu yakin ingin menyetujui pengajuan cuti ini?',
+      message: 'Apakah kamu yakin ingin menyetujui pengajuan cuti ini?',
       confirmLabel: 'Setujui',
       confirmColor: const Color(0xFF2196F3),
     );
     if (confirm != true) return;
 
-    final ok = await widget.controller.setujuiCuti(
+    final result = await widget.controller.setujuiCuti(
       docId: widget.docId,
       nipApprover: widget.nipApprover,
+      pengajuan: widget.pengajuan,
+      karyawan: widget.karyawan,
     );
 
     if (!mounted) return;
-    if (ok) {
+
+    if (result.sukses) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cuti berhasil disetujui.'),
@@ -62,10 +122,34 @@ class _DetailVerifikasiCutiViewState
       );
       Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal memproses. Coba lagi.'),
-          backgroundColor: Colors.redAccent,
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Pengajuan Tidak Valid',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            result.pesanError ?? 'Gagal memproses. Coba lagi.',
+            style: const TextStyle(fontSize: 14, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Mengerti'),
+            ),
+          ],
         ),
       );
     }
@@ -78,8 +162,7 @@ class _DetailVerifikasiCutiViewState
   Future<void> _onTolak() async {
     final confirm = await _showConfirmDialog(
       title: 'Tolak Cuti',
-      message:
-          'Apakah kamu yakin ingin menolak pengajuan cuti ini?',
+      message: 'Apakah kamu yakin ingin menolak pengajuan cuti ini?',
       confirmLabel: 'Tolak',
       confirmColor: Colors.redAccent,
     );
@@ -127,9 +210,7 @@ class _DetailVerifikasiCutiViewState
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: confirmColor,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: confirmColor),
             child: Text(
               confirmLabel,
               style: const TextStyle(color: Colors.white),
@@ -140,13 +221,10 @@ class _DetailVerifikasiCutiViewState
     );
   }
 
-  // ─────────────────────────────────────────────
-  // Nama file dari URL/path
-  // ─────────────────────────────────────────────
-
   String _namaFile(String url) {
     if (url.isEmpty) return '-';
-    return url.split('/').last.split('?').first;
+    if (_isUrl(url)) return url.split('/').last.split('?').first;
+    return 'bukti_cuti.jpg';
   }
 
   @override
@@ -164,8 +242,7 @@ class _DetailVerifikasiCutiViewState
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left,
-              color: Colors.black87, size: 28),
+          icon: const Icon(Icons.chevron_left, color: Colors.black87, size: 28),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
@@ -179,35 +256,15 @@ class _DetailVerifikasiCutiViewState
       ),
       body: Stack(
         children: [
-          // ── Konten utama ──
           SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 12),
-                // Header: Avatar + nama
                 Row(
                   children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD6E8F6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: k != null && k.fotoProfil.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                k.fotoProfil,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const _AvatarFallback(),
-                              ),
-                            )
-                          : const _AvatarFallback(),
-                    ),
+                    _buildAvatar(k),
                     const SizedBox(width: 14),
                     Text(
                       k?.nama ?? p.nipPemohon,
@@ -237,7 +294,6 @@ class _DetailVerifikasiCutiViewState
                 const SizedBox(height: 14),
                 _buildLabel('Bukti Cuti'),
                 const SizedBox(height: 6),
-                // Bukti lampiran — bisa dipencet
                 GestureDetector(
                   onTap: p.buktiLampiran.isNotEmpty
                       ? () => setState(() => _showBuktiPreview = true)
@@ -246,34 +302,33 @@ class _DetailVerifikasiCutiViewState
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFFF5F5F5),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFDDDDDD),
-                        width: 1,
-                        style: BorderStyle.solid,
-                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        // Thumbnail
                         Container(
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEEEEEE),
+                            color: const Color(0xFFE0E0E0),
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          clipBehavior: Clip.antiAlias,
                           child: p.buktiLampiran.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    p.buktiLampiran,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const Icon(Icons.insert_drive_file,
-                                            color: Colors.grey),
-                                  ),
+                              ? _buildImage(
+                                  data: p.buktiLampiran,
+                                  fit: BoxFit.cover,
+                                  fallback: () => const Icon(
+                                      Icons.insert_drive_file,
+                                      color: Colors.grey),
                                 )
                               : const Icon(Icons.insert_drive_file,
                                   color: Colors.grey),
@@ -282,13 +337,13 @@ class _DetailVerifikasiCutiViewState
                         Expanded(
                           child: Text(
                             _namaFile(p.buktiLampiran),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black87,
-                            ),
+                            style: TextStyle(
+                                fontSize: 13, color: Colors.grey[600]),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const Icon(Icons.chevron_right,
+                            color: Colors.grey, size: 20),
                       ],
                     ),
                   ),
@@ -308,7 +363,6 @@ class _DetailVerifikasiCutiViewState
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  // Tombol Tolak Cuti
                   Expanded(
                     child: SizedBox(
                       height: 50,
@@ -342,7 +396,6 @@ class _DetailVerifikasiCutiViewState
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Tombol Verifikasi Cuti (Setujui)
                   Expanded(
                     child: SizedBox(
                       height: 50,
@@ -365,7 +418,7 @@ class _DetailVerifikasiCutiViewState
                                 ),
                               )
                             : const Text(
-                                'Verifikasi Cuti',
+                                'Setujui Cuti',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -380,22 +433,23 @@ class _DetailVerifikasiCutiViewState
             ),
           ),
 
-          // ── Overlay Preview Bukti (Halaman 3) ──
-          if (_showBuktiPreview) _BuktiPreviewOverlay(
-            pengajuan: widget.pengajuan,
-            karyawan: widget.karyawan,
-            onClose: () => setState(() => _showBuktiPreview = false),
-            onTolak: () {
-              setState(() => _showBuktiPreview = false);
-              _onTolak();
-            },
-            onVerifikasi: () {
-              setState(() => _showBuktiPreview = false);
-              _onVerifikasi();
-            },
-            isSubmitting: isSubmitting,
-            namaFile: _namaFile(widget.pengajuan.buktiLampiran),
-          ),
+          // ── Overlay Preview Bukti ──
+          if (_showBuktiPreview)
+            _BuktiPreviewOverlay(
+              pengajuan: widget.pengajuan,
+              karyawan: widget.karyawan,
+              onClose: () => setState(() => _showBuktiPreview = false),
+              onTolak: () {
+                setState(() => _showBuktiPreview = false);
+                _onTolak();
+              },
+              onVerifikasi: () {
+                setState(() => _showBuktiPreview = false);
+                _onVerifikasi();
+              },
+              isSubmitting: isSubmitting,
+              namaFile: _namaFile(widget.pengajuan.buktiLampiran),
+            ),
         ],
       ),
     );
@@ -419,11 +473,11 @@ class _DetailVerifikasiCutiViewState
       constraints: BoxConstraints(minHeight: minLines > 1 ? 90 : 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -431,14 +485,14 @@ class _DetailVerifikasiCutiViewState
       ),
       child: Text(
         value,
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
+        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────
-// Overlay "Veri Img" — preview bukti cuti (Halaman 3)
+// Overlay Preview Bukti Cuti
 // ─────────────────────────────────────────────
 
 class _BuktiPreviewOverlay extends StatelessWidget {
@@ -460,6 +514,66 @@ class _BuktiPreviewOverlay extends StatelessWidget {
     required this.namaFile,
   });
 
+  static bool _isUrl(String s) =>
+      s.startsWith('http://') || s.startsWith('https://');
+
+  static Widget _buildImage({
+    required String data,
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+    Widget Function()? fallback,
+  }) {
+    if (data.isEmpty) return fallback?.call() ?? const SizedBox.shrink();
+
+    if (_isUrl(data)) {
+      return Image.network(
+        data,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (_, __, ___) =>
+            fallback?.call() ??
+            const Icon(Icons.broken_image, color: Colors.grey),
+      );
+    }
+
+    try {
+      final bytes = base64Decode(data);
+      return Image.memory(
+        bytes,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (_, __, ___) =>
+            fallback?.call() ??
+            const Icon(Icons.broken_image, color: Colors.grey),
+      );
+    } catch (_) {
+      return fallback?.call() ??
+          const Icon(Icons.broken_image, color: Colors.grey);
+    }
+  }
+
+  static Widget _buildAvatar(KaryawanModel? k) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: const BoxDecoration(
+        color: Color(0xFFD6E8F6),
+        shape: BoxShape.circle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: k != null && k.fotoProfil.isNotEmpty
+          ? _buildImage(
+              data: k.fotoProfil,
+              fit: BoxFit.cover,
+              fallback: () => const _AvatarFallback(),
+            )
+          : const _AvatarFallback(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = pengajuan;
@@ -476,28 +590,9 @@ class _BuktiPreviewOverlay extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: avatar + nama + tombol close
                 Row(
                   children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD6E8F6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: k != null && k.fotoProfil.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                k.fotoProfil,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const _AvatarFallback(),
-                              ),
-                            )
-                          : const _AvatarFallback(),
-                    ),
+                    _buildAvatar(k),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(
@@ -532,16 +627,24 @@ class _BuktiPreviewOverlay extends StatelessWidget {
                 _readOnly(k?.role ?? '-'),
                 const SizedBox(height: 14),
                 _label('Tanggal Awal Cuti'),
-                // Tampilkan preview gambar di sini seperti di gambar
-                if (p.buktiLampiran.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                _readOnly(dateAwal),
+                const SizedBox(height: 14),
+                _label('Tanggal Akhir Cuti'),
+                _readOnly(dateAkhir),
+                const SizedBox(height: 14),
+                _label('Alasan Cuti'),
+                _readOnly(p.jenisPengajuan, minLines: 3),
+                const SizedBox(height: 14),
+                _label('Bukti Cuti'),
+                const SizedBox(height: 8),
+                if (p.buktiLampiran.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      p.buktiLampiran,
+                    child: _buildImage(
+                      data: p.buktiLampiran,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      fallback: () => Container(
                         height: 160,
                         color: Colors.grey[200],
                         child: const Center(
@@ -550,22 +653,33 @@ class _BuktiPreviewOverlay extends StatelessWidget {
                         ),
                       ),
                     ),
+                  )
+                else
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Text('Tidak ada bukti lampiran',
+                          style: TextStyle(color: Colors.grey)),
+                    ),
                   ),
-                ],
                 const SizedBox(height: 14),
-                _readOnly(p.jenisPengajuan, minLines: 3),
-                const SizedBox(height: 14),
-                _label('Bukti Cuti'),
-                const SizedBox(height: 6),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFDDDDDD),
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -573,19 +687,17 @@ class _BuktiPreviewOverlay extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEEEEE),
+                          color: const Color(0xFFE0E0E0),
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        clipBehavior: Clip.antiAlias,
                         child: p.buktiLampiran.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  p.buktiLampiran,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.insert_drive_file,
-                                      color: Colors.grey),
-                                ),
+                            ? _buildImage(
+                                data: p.buktiLampiran,
+                                fit: BoxFit.cover,
+                                fallback: () => const Icon(
+                                    Icons.insert_drive_file,
+                                    color: Colors.grey),
                               )
                             : const Icon(Icons.insert_drive_file,
                                 color: Colors.grey),
@@ -594,8 +706,8 @@ class _BuktiPreviewOverlay extends StatelessWidget {
                       Expanded(
                         child: Text(
                           namaFile,
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.black87),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[600]),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -605,6 +717,7 @@ class _BuktiPreviewOverlay extends StatelessWidget {
               ],
             ),
           ),
+
           // Tombol bawah
           Positioned(
             left: 0,
@@ -685,15 +798,21 @@ class _BuktiPreviewOverlay extends StatelessWidget {
         margin: const EdgeInsets.only(top: 6),
         width: double.infinity,
         constraints: BoxConstraints(minHeight: minLines > 1 ? 80 : 0),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Text(
           value,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
         ),
       );
 }

@@ -2,6 +2,8 @@
 // verifikasi_cuti_view.dart  ← Halaman 1: List pengajuan
 // ================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../controllers/verifikasi_cuti_controller.dart';
@@ -69,7 +71,8 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
         child: Column(
           children: [
             const SizedBox(height: 8),
-            // Search bar
+
+            // ── Search bar ──
             Container(
               height: 46,
               decoration: BoxDecoration(
@@ -77,7 +80,7 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -101,8 +104,10 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
-            // List
+
+            // ── List ──
             Expanded(
               child: _controller.isLoading
                   ? const Center(
@@ -122,7 +127,7 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
                           child: ListView.separated(
                             itemCount: filtered.length,
                             separatorBuilder: (_, __) =>
-                                const SizedBox(height: 0),
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final item = filtered[index];
                               final pengajuan =
@@ -151,8 +156,7 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
                                     ),
                                   );
                                   if (result == true) {
-                                    await _controller
-                                        .fetchPengajuanMenunggu();
+                                    await _controller.fetchPengajuanMenunggu();
                                   }
                                 },
                               );
@@ -160,6 +164,8 @@ class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
                           ),
                         ),
             ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -182,24 +188,59 @@ class _PengajuanListTile extends StatelessWidget {
     required this.onTap,
   });
 
+  static Widget _buildAvatar(KaryawanModel? k) {
+    if (k != null && k.fotoProfil.isNotEmpty) {
+      try {
+        final bytes = base64Decode(k.fotoProfil);
+        return Container(
+          width: 46,
+          height: 46,
+          decoration: const BoxDecoration(
+            color: Color(0xFFD6E8F6),
+            shape: BoxShape.circle,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.memory(bytes, fit: BoxFit.cover),
+        );
+      } catch (_) {}
+    }
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: const BoxDecoration(
+        color: Color(0xFFD6E8F6),
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.person, size: 26, color: Color(0xFF5B9BD5)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('dd/MM/yyyy')
-        .format(pengajuan.tanggalPengajuan);
+    final dateStr = DateFormat('dd/MM/yyyy').format(pengajuan.tanggalPengajuan);
 
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-        decoration: const BoxDecoration(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-            bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
-          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
+            // Avatar
+            _buildAvatar(karyawan),
+            const SizedBox(width: 12),
+
+            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,19 +255,58 @@ class _PengajuanListTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    dateStr,
+                    karyawan?.role ?? '-',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF2196F3),
+                      color: Colors.grey,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today_outlined,
+                          size: 12, color: Color(0xFF2196F3)),
+                      const SizedBox(width: 4),
+                      Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2196F3),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.grey,
-              size: 22,
+
+            // Badge status + chevron
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Menunggu',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFE67E22),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+              ],
             ),
           ],
         ),
