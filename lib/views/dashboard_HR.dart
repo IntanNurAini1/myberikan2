@@ -11,7 +11,7 @@ import 'riwayat_absensi_screen.dart';
 import 'ajukan_cuti_screen.dart';
 import 'data_absensi_screen.dart';
 import 'data_karyawan_view.dart';
-import 'login_screen.dart'; // sesuaikan dengan nama file login kamu
+import 'login_screen.dart';
 
 class DashboardHrScreen extends StatefulWidget {
   const DashboardHrScreen({super.key});
@@ -115,8 +115,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
   // ── Logout ──
 
   void _showLogoutMenu(BuildContext context) {
-    final RenderBox button =
-        context.findRenderObject() as RenderBox;
+    final RenderBox button = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
         Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
@@ -322,12 +321,6 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           ],
         ),
         const Spacer(),
-        // IconButton(
-        //   onPressed: () {},
-        //   icon: const Icon(Icons.notifications_outlined,
-        //       color: Color(0xFF2B7FD4)),
-        // ),
-        // ── Tombol menu dengan popup logout ──
         Builder(
           builder: (btnContext) => IconButton(
             onPressed: () => _showLogoutMenu(btnContext),
@@ -551,7 +544,43 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       ),
     ];
 
+    // ── Helper build satu item fitur ──
+    Widget buildItem(_FiturItem f) {
+      return InkWell(
+        onTap: f.onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF3F8),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(f.icon,
+                  color: const Color(0xFF2B7FD4), size: 26),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              f.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF1A2D45),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -564,42 +593,33 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           ),
         ],
       ),
-      child: Wrap(
-        spacing: 52,
-        runSpacing: 16,
-        children: features.map((f) {
-          return SizedBox(
-            width: 72,
-            child: InkWell(
-              onTap: f.onTap,
-              borderRadius: BorderRadius.circular(14),
-              child: Column(
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF3F8),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(f.icon,
-                        color: const Color(0xFF2B7FD4), size: 26),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    f.label,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF1A2D45),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Baris 1: 3 fitur pertama rata kiri ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: features.sublist(0, 3).map((f) {
+              return SizedBox(
+                width: (MediaQuery.of(context).size.width - 40 - 40) / 3,
+                child: buildItem(f),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 20),
+
+          // ── Baris 2: 2 fitur terakhir rata kiri ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: features.sublist(3, 5).map((f) {
+              return SizedBox(
+                width: (MediaQuery.of(context).size.width - 40 - 40) / 3,
+                child: buildItem(f),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

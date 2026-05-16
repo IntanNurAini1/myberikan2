@@ -10,7 +10,6 @@ import '../models/kehadiran_model.dart';
 import '../models/karyawan_model.dart';
 import 'riwayat_absensi_screen.dart';
 import 'ajukan_cuti_screen.dart';
-import 'info_karyawan_view.dart';
 import 'login_screen.dart';
 
 class DashboardKaryawanScreen extends StatefulWidget {
@@ -484,7 +483,7 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     );
   }
 
-  // ── Fitur Aplikasi — 2 fitur pakai Row agar lebar sama dengan card lain ──
+  // ── Fitur Aplikasi — rata kiri ──
 
   Widget _buildFiturAplikasi(BuildContext context) {
     final List<_FiturItem> features = [
@@ -502,6 +501,9 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
       ),
     ];
 
+    final double itemWidth =
+        (MediaQuery.of(context).size.width - 40 - 40) / 3;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
@@ -517,13 +519,13 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.start, // ← rata kiri
         children: features.map((f) {
-          return InkWell(
-            onTap: f.onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: SizedBox(
-              width: 80,
+          return SizedBox(
+            width: itemWidth,
+            child: InkWell(
+              onTap: f.onTap,
+              borderRadius: BorderRadius.circular(14),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -147,18 +147,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 10),
 
-              GestureDetector(
-                onTap: _onLupaKataSandi,
-                child: const Text(
-                  'Lupa kata sandi?',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                    color: Color(0xFF4A80C4),
-                  ),
-                ),
-              ),
+              // GestureDetector(
+              //   onTap: _onLupaKataSandi,
+              //   child: const Text(
+              //     'Lupa kata sandi?',
+              //     style: TextStyle(
+              //       fontFamily: 'Poppins',
+              //       fontWeight: FontWeight.w500,
+              //       fontSize: 13,
+              //       color: Color(0xFF4A80C4),
+              //     ),
+              //   ),
+              // ),
 
               const SizedBox(height: 28),
 
