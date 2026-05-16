@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myberikan/views/data_cuti_screen.dart';
 import 'package:myberikan/views/verifikasi_cuti_view.dart';
 import '../controllers/absensi_controller.dart';
 import '../controllers/auth_controller.dart';
@@ -540,7 +541,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
         icon: Icons.date_range_outlined,
         label: 'Data Cuti',
         onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AjukanCutiScreen())),
+            MaterialPageRoute(builder: (_) => const DataCutiScreen())),
       ),
       _FiturItem(
         icon: Icons.people_outline,
