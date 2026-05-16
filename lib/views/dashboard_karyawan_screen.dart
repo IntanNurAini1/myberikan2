@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myberikan/views/info_karyawan_view.dart';
 
 import '../controllers/absensi_controller.dart';
 import '../controllers/auth_controller.dart';
@@ -9,7 +10,7 @@ import '../models/kehadiran_model.dart';
 import '../models/karyawan_model.dart';
 import 'riwayat_absensi_screen.dart';
 import 'ajukan_cuti_screen.dart';
-import 'data_karyawan_view.dart';
+import 'info_karyawan_view.dart';
 import 'login_screen.dart';
 
 class DashboardKaryawanScreen extends StatefulWidget {
@@ -497,7 +498,7 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
         icon: Icons.people_outline,
         label: 'Data\nKaryawan',
         onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const DataKaryawanView())),
+            MaterialPageRoute(builder: (_) => const InfoKaryawanView())),
       ),
     ];
 
