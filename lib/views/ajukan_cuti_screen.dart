@@ -101,7 +101,16 @@ class _AjukanCutiScreenState extends State<AjukanCutiScreen> {
     if (tanggalAwal == null || tanggalAkhir == null) {
       return;
     }
-
+    if (tanggalAkhir!.isBefore(tanggalAwal!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Tanggal akhir tidak boleh lebih kecil dari tanggal awal",
+          ),
+        ),
+      );
+      return;
+    }
     final nip = userData?['nip'];
 
     await firestore.collection('pengajuan').add({
