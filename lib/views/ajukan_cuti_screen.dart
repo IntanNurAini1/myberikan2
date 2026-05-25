@@ -98,7 +98,19 @@ class _AjukanCutiScreenState extends State<AjukanCutiScreen> {
   }
 
   Future<void> submitPengajuan() async {
-    if (tanggalAwal == null || tanggalAkhir == null) {
+    // if (tanggalAwal == null || tanggalAkhir == null) {
+    //   return;
+    // }
+    if (tanggalAwal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Tanggal awal cuti wajib diisi")),
+      );
+      return;
+    }
+    if (tanggalAkhir == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Tanggal akhir cuti wajib diisi")),
+      );
       return;
     }
     if (tanggalAkhir!.isBefore(tanggalAwal!)) {
@@ -111,25 +123,43 @@ class _AjukanCutiScreenState extends State<AjukanCutiScreen> {
       );
       return;
     }
-    final nip = userData?['nip'];
+    if (alasanController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Alasan cuti wajib diisi")));
+      return;
+    }
+    if (buktiBase64 == null || buktiBase64!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Bukti cuti wajib diupload")),
+      );
+      return;
+    }
+    try {
+      final nip = userData?['nip'];
 
-    await firestore.collection('pengajuan').add({
-      'id_pengajuan': DateTime.now().millisecondsSinceEpoch.toString(),
-      'nip_pemohon': nip,
-      'nip_approver': '',
-      'jenis_pengajuan': alasanController.text,
-      'tanggal_mulai': tanggalAwal,
-      'tanggal_akhir': tanggalAkhir,
-      'bukti_lampiran': buktiBase64 ?? '',
-      'status_persetujuan': 'Sedang Diproses',
-      'tanggal_pengajuan': DateTime.now(),
-    });
+      await firestore.collection('pengajuan').add({
+        'id_pengajuan': DateTime.now().millisecondsSinceEpoch.toString(),
+        'nip_pemohon': nip,
+        'nip_approver': '',
+        'jenis_pengajuan': alasanController.text.trim(),
+        'tanggal_mulai': tanggalAwal,
+        'tanggal_akhir': tanggalAkhir,
+        'bukti_lampiran': buktiBase64,
+        'status_persetujuan': 'Sedang Diproses',
+        'tanggal_pengajuan': DateTime.now(),
+      });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Pengajuan berhasil")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Pengajuan berhasil")));
 
-    context.pop();
+      context.pop();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+    }
   }
 
   Widget label(String text) {
