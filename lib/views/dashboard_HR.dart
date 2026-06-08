@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:myberikan/views/data_cuti_screen.dart';
 import 'package:myberikan/views/verifikasi_cuti_view.dart';
+import 'package:myberikan/views/riwayat_pengajuan_cuti_screen.dart';
 import '../controllers/absensi_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../models/kehadiran_model.dart';
 import '../models/karyawan_model.dart';
 import 'riwayat_absensi_screen.dart';
-import 'ajukan_cuti_screen.dart';
 import 'data_absensi_screen.dart';
 import 'data_karyawan_view.dart';
 import 'login_screen.dart';
@@ -112,12 +112,30 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     }
   }
 
+  // ── Singkatan divisi (sama dengan dashboard karyawan) ──
+
+  String _singkatanDivisi(String divisi) {
+    if (divisi.isEmpty) return '-';
+    final regexKurung = RegExp(r'\(([^)]+)\)');
+    final match = regexKurung.firstMatch(divisi);
+    if (match != null) return match.group(1)!;
+    final tanpaDivisi =
+        divisi.replaceAll(RegExp(r'[Dd]ivisi'), '').trim();
+    final kata = tanpaDivisi
+        .split(RegExp(r'[\s/&]+'))
+        .where((k) => k.isNotEmpty)
+        .toList();
+    if (kata.length == 1) return kata.first;
+    return kata.map((k) => k[0].toUpperCase()).join();
+  }
+
   // ── Logout ──
 
   void _showLogoutMenu(BuildContext context) {
     final RenderBox button = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
-        Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+        Navigator.of(context).overlay!.context.findRenderObject()
+            as RenderBox;
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
@@ -131,14 +149,16 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     showMenu<String>(
       context: context,
       position: position,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
       items: [
         PopupMenuItem<String>(
           value: 'logout',
           child: Row(
             children: const [
-              Icon(Icons.logout_rounded, color: Color(0xFFEF5350), size: 20),
+              Icon(Icons.logout_rounded,
+                  color: Color(0xFFEF5350), size: 20),
               SizedBox(width: 10),
               Text(
                 'Keluar',
@@ -162,8 +182,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
     final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Keluar Aplikasi?',
           style: TextStyle(
@@ -181,7 +201,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text(
               'Batal',
-              style: TextStyle(fontFamily: 'Poppins', color: Colors.grey),
+              style:
+                  TextStyle(fontFamily: 'Poppins', color: Colors.grey),
             ),
           ),
           TextButton(
@@ -308,7 +329,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
           children: [
             const Text(
               'Selamat datang!',
-              style: TextStyle(fontSize: 12, color: Color(0xFF7A8FA6)),
+              style:
+                  TextStyle(fontSize: 12, color: Color(0xFF7A8FA6)),
             ),
             Text(
               _isLoadingProfil ? '...' : (_karyawan?.nama ?? '-'),
@@ -339,7 +361,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
         color: const Color(0xFFD6E8F7),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
+      child:
+          const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
     );
   }
 
@@ -404,34 +427,41 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
                 fontSize: 12, color: Color(0xFF7A8FA6)),
           ),
           const SizedBox(height: 14),
+
+          // ── Shift + Divisi konsisten dengan dashboard karyawan ──
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF3F8),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.access_time,
-                        size: 14, color: Color(0xFF2B7FD4)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Shift Pagi • 08:00 - 17:00',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2B7FD4),
-                        fontWeight: FontWeight.w500,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF3F8),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 14, color: Color(0xFF2B7FD4)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Shift Pagi • 08:00 - 17:00',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2B7FD4),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 16),
+              // ← rata kiri, konsisten dengan dashboard karyawan
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'DIVISI',
@@ -441,19 +471,20 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
                       letterSpacing: 0.5,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    _karyawan?.divisi ?? '-',
+                    _singkatanDivisi(_karyawan?.divisi ?? ''),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2B7FD4),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ],
           ),
+
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -515,8 +546,10 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       _FiturItem(
         icon: Icons.calendar_today_outlined,
         label: 'Pengajuan Cuti',
-        onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AjukanCutiScreen())),
+        onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const RiwayatPengajuanScreen())),
       ),
       _FiturItem(
         icon: Icons.event_available_outlined,
@@ -544,7 +577,6 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       ),
     ];
 
-    // ── Helper build satu item fitur ──
     Widget buildItem(_FiturItem f) {
       return InkWell(
         onTap: f.onTap,
@@ -596,7 +628,6 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Baris 1: 3 fitur pertama rata kiri ──
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: features.sublist(0, 3).map((f) {
@@ -606,10 +637,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
               );
             }).toList(),
           ),
-
           const SizedBox(height: 20),
-
-          // ── Baris 2: 2 fitur terakhir rata kiri ──
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: features.sublist(3, 5).map((f) {
@@ -664,7 +692,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFF2B7FD4)),
+          child:
+              CircularProgressIndicator(color: Color(0xFF2B7FD4)),
         ),
       );
     }
@@ -762,8 +791,8 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: badgeBg,
               borderRadius: BorderRadius.circular(20),

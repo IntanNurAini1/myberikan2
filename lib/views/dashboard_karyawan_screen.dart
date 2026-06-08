@@ -9,7 +9,7 @@ import '../controllers/auth_controller.dart';
 import '../models/kehadiran_model.dart';
 import '../models/karyawan_model.dart';
 import 'riwayat_absensi_screen.dart';
-import 'ajukan_cuti_screen.dart';
+import 'package:myberikan/views/riwayat_pengajuan_cuti_screen.dart';
 import 'login_screen.dart';
 
 class DashboardKaryawanScreen extends StatefulWidget {
@@ -96,6 +96,22 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     } finally {
       if (mounted) setState(() => _isAbsenLoading = false);
     }
+  }
+
+  // ── Singkatan divisi ──
+
+  String _singkatanDivisi(String divisi) {
+    if (divisi.isEmpty) return '-';
+    final regexKurung = RegExp(r'\(([^)]+)\)');
+    final match = regexKurung.firstMatch(divisi);
+    if (match != null) return match.group(1)!;
+    final tanpaDivisi = divisi.replaceAll(RegExp(r'[Dd]ivisi'), '').trim();
+    final kata = tanpaDivisi
+        .split(RegExp(r'[\s/&]+'))
+        .where((k) => k.isNotEmpty)
+        .toList();
+    if (kata.length == 1) return kata.first;
+    return kata.map((k) => k[0].toUpperCase()).join();
   }
 
   // ── Logout ──
@@ -264,8 +280,6 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     );
   }
 
-  // ── Header ──
-
   Widget _buildHeader() {
     Widget avatar;
     if (_karyawan != null && _karyawan!.fotoProfil.isNotEmpty) {
@@ -288,8 +302,8 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Selamat datang!',
-                style:
-                    TextStyle(fontSize: 12, color: Color(0xFF7A8FA6))),
+                style: TextStyle(
+                    fontSize: 12, color: Color(0xFF7A8FA6))),
             Text(
               _isLoadingProfil ? '...' : (_karyawan?.nama ?? '-'),
               style: const TextStyle(
@@ -319,12 +333,9 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
         color: const Color(0xFFD6E8F7),
         borderRadius: BorderRadius.circular(24),
       ),
-      child:
-          const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
+      child: const Icon(Icons.person, color: Color(0xFF2B7FD4), size: 30),
     );
   }
-
-  // ── Profile card ──
 
   Widget _buildProfileCard() {
     final statusAbsen = _absensiController.getStatusByWaktu();
@@ -349,6 +360,7 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Role + badge AKTIF
           Row(
             children: [
               Text(
@@ -385,34 +397,44 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
                 fontSize: 12, color: Color(0xFF7A8FA6)),
           ),
           const SizedBox(height: 14),
+
+          // Shift + Divisi — keduanya rata kiri
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF3F8),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.access_time,
-                        size: 14, color: Color(0xFF2B7FD4)),
-                    SizedBox(width: 6),
-                    Text(
-                      'Shift Pagi • 08:00 - 17:00',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF2B7FD4),
-                        fontWeight: FontWeight.w500,
+              // Shift pill
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF3F8),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.access_time,
+                          size: 14, color: Color(0xFF2B7FD4)),
+                      SizedBox(width: 6),
+                      Text(
+                        'Shift Pagi • 08:00 - 17:00',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF2B7FD4),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              const Spacer(),
+
+              const SizedBox(width: 16),
+
+              // Divisi — label + nilai rata kiri
               Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start, // ← rata kiri
                 children: [
                   const Text(
                     'DIVISI',
@@ -422,20 +444,23 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
                       letterSpacing: 0.5,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    _karyawan?.divisi ?? '-',
+                    _singkatanDivisi(_karyawan?.divisi ?? ''),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2B7FD4),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ],
           ),
+
           const SizedBox(height: 16),
+
+          // Tombol absen
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -483,15 +508,14 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     );
   }
 
-  // ── Fitur Aplikasi — rata kiri ──
-
   Widget _buildFiturAplikasi(BuildContext context) {
     final List<_FiturItem> features = [
       _FiturItem(
         icon: Icons.calendar_today_outlined,
         label: 'Pengajuan\nCuti',
         onTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AjukanCutiScreen())),
+            MaterialPageRoute(
+                builder: (_) => const RiwayatPengajuanScreen())),
       ),
       _FiturItem(
         icon: Icons.people_outline,
@@ -519,7 +543,7 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start, // ← rata kiri
+        mainAxisAlignment: MainAxisAlignment.start,
         children: features.map((f) {
           return SizedBox(
             width: itemWidth,
@@ -558,8 +582,6 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     );
   }
 
-  // ── Riwayat Header ──
-
   Widget _buildRiwayatHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -591,15 +613,12 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
     );
   }
 
-  // ── Riwayat List ──
-
   Widget _buildRiwayatList() {
     if (_isLoadingRiwayat) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child:
-              CircularProgressIndicator(color: Color(0xFF2B7FD4)),
+          child: CircularProgressIndicator(color: Color(0xFF2B7FD4)),
         ),
       );
     }
