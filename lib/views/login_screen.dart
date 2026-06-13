@@ -85,9 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _onLupaKataSandi() {
-    // TODO: navigasi ke halaman lupa kata sandi
-  }
+  // void _onLupaKataSandi() {
+  //   // TODO: navigasi ke halaman lupa kata sandi
+  // }
 
   void _onDaftar() {
     Navigator.of(context)
