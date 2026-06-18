@@ -18,6 +18,7 @@ class VerifikasiCutiView extends StatefulWidget {
   State<VerifikasiCutiView> createState() => _VerifikasiCutiViewState();
 }
 
+
 class _VerifikasiCutiViewState extends State<VerifikasiCutiView> {
   final VerifikasiCutiController _controller = VerifikasiCutiController();
   final TextEditingController _searchController = TextEditingController();
