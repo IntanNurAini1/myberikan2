@@ -223,12 +223,13 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
   bool get _canAbsen {
     if (_sudahAbsen) return false;
     if (_isAbsenLoading) return false;
-    return _absensiController.getStatusByWaktu() != null;
+    return AbsensiController.getStatusByJam(DateTime.now()) != null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('dashboardKaryawan'),
       backgroundColor: const Color(0xFFEEF3F8),
       body: SafeArea(
         child: RefreshIndicator(
@@ -327,7 +328,7 @@ class _DashboardKaryawanScreenState extends State<DashboardKaryawanScreen> {
   // ── Profile card ──
 
   Widget _buildProfileCard() {
-    final statusAbsen = _absensiController.getStatusByWaktu();
+    final statusAbsen = AbsensiController.getStatusByJam(DateTime.now());
     final labelTombol = _sudahAbsen
         ? 'Sudah Absen Hari Ini'
         : _absensiController.getLabelTombol();

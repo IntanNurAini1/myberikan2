@@ -27,24 +27,33 @@ class AbsensiController {
 
   /// Kembalikan status absen berdasarkan waktu sekarang.
   /// null = di luar jam absen (tombol nonaktif).
-  String? getStatusByWaktu() {
-    final now = DateTime.now();
-    final jam = now.hour;
-    final menit = now.minute;
-    final totalMenit = jam * 60 + menit;
+static String? getStatusByJam(DateTime now) {
+  final jam = now.hour;
+  final menit = now.minute;
+  final totalMenit = jam * 60 + menit;
 
-    const buka = 1 * 60;       // 05:00
-    const batasHadir = 8 * 60; // 08:00
-    const tutup = 23 * 60;     // 10:00
+  const buka = 6 * 60;
+  const batasHadir = 8 * 60;
+  const tutup = 20 * 60;
 
-    if (totalMenit >= buka && totalMenit <= batasHadir) return 'HADIR';
-    if (totalMenit > batasHadir && totalMenit <= tutup) return 'TERLAMBAT';
-    return null; // di luar jam absen
+  if (totalMenit >= buka && totalMenit <= batasHadir) {
+    return 'HADIR';
   }
+
+  if (totalMenit > batasHadir && totalMenit <= tutup) {
+    return 'TERLAMBAT';
+  }
+
+  return null;
+}
+
+String? getStatusByWaktu() {
+  return AbsensiController.getStatusByJam(DateTime.now());
+}
 
   /// Label tombol sesuai jam.
   String getLabelTombol() {
-    final status = getStatusByWaktu();
+    final status = getStatusByJam(DateTime.now());
     if (status == null) return 'Di Luar Jam Absen';
     return 'Absen Sekarang';
   }
@@ -99,9 +108,9 @@ class AbsensiController {
   /// simpan ke Firestore collection `kehadiran`.
   Future<KehadiranModel> absenSekarang() async {
     // 1. Cek jam
-    final status = getStatusByWaktu();
+    final status = getStatusByJam(DateTime.now());
     if (status == null) {
-      throw AbsensiException('Di luar jam absen (05:00 - 10:00).');
+      throw AbsensiException('Di luar jam absen (01:00 - 10:00).');
     }
 
     // 2. Cek user login

@@ -125,6 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildLabel('Nama Pengguna'),
               const SizedBox(height: 8),
               _buildTextField(
+                fieldKey: const Key('usernameField'),
                 controller: _usernameController,
                 hint: 'Masukkan Nama Pengguna',
                 obscure: false,
@@ -135,6 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildLabel('Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
+                fieldKey: const Key('passwordField'),
                 controller: _passwordController,
                 hint: 'Masukkan kata sandi',
                 obscure: _obscurePassword,
@@ -194,6 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
   Widget _buildTextField({
+    Key? fieldKey,
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -212,6 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
       child: TextField(
+        key: fieldKey,
         controller: controller,
         obscureText: obscure,
         style: const TextStyle(
@@ -262,6 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
+        key: const Key('loginButton'),
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4A80C4),

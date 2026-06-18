@@ -242,12 +242,13 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
   bool get _canAbsen {
     if (_sudahAbsen) return false;
     if (_isAbsenLoading) return false;
-    return _absensiController.getStatusByWaktu() != null;
+    return AbsensiController.getStatusByJam(DateTime.now()) != null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: const Key('dashboardHR'),
       backgroundColor: const Color(0xFFEEF3F8),
       body: SafeArea(
         child: RefreshIndicator(
@@ -354,7 +355,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
   // ── Profile card ──
 
   Widget _buildProfileCard() {
-    final statusAbsen = _absensiController.getStatusByWaktu();
+    final statusAbsen = AbsensiController.getStatusByJam(DateTime.now());
     final labelTombol = _sudahAbsen
         ? 'Sudah Absen Hari Ini'
         : _absensiController.getLabelTombol();
@@ -427,7 +428,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
                         size: 14, color: Color(0xFF2B7FD4)),
                     SizedBox(width: 6),
                     Text(
-                      'Shift Pagi • 08:00 - 17:00',
+                      'Shift hari ini • 08:00 - 23:00',
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF2B7FD4),
@@ -467,6 +468,7 @@ class _DashboardHrScreenState extends State<DashboardHrScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
+              key: const Key('absenButton'),
               onPressed: _canAbsen ? _onAbsenSekarang : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _sudahAbsen

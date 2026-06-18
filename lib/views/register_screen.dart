@@ -123,6 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildLabel('ID Karyawan'),
               const SizedBox(height: 8),
               _buildTextField(
+                key: const Key('nipField'),
                 controller: _idKaryawanController,
                 hint: 'ID karyawan',
                 obscure: false,
@@ -133,6 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildLabel('Akun Google'),
               const SizedBox(height: 8),
               _buildTextField(
+                key: const Key('emailField'),
                 controller: _googleController,
                 hint: 'Masukan akun google anda',
                 obscure: false,
@@ -144,6 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildLabel('Nama Pengguna'),
               const SizedBox(height: 8),
               _buildTextField(
+                key: const Key('usernameField'),
                 controller: _usernameController,
                 hint: 'Masukkan Nama Pengguna',
                 obscure: false,
@@ -154,6 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildLabel('Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
+                key: const Key('passwordField'),
                 controller: _passwordController,
                 hint: 'Masukkan kata sandi',
                 obscure: _obscurePassword,
@@ -169,6 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _buildLabel('Konfirmasi Kata Sandi'),
               const SizedBox(height: 8),
               _buildTextField(
+                key: const Key('confirmPasswordField'),
                 controller: _confirmPasswordController,
                 hint: 'Masukkan kata sandi',
                 obscure: _obscureConfirmPassword,
@@ -184,6 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 28),
 
               _buildButton(
+                key: const Key('registerButton'),
                 label: _isLoading ? 'Mendaftarkan...' : 'Daftar',
                 onTap: _isLoading ? null : _onDaftar,
               ),
@@ -217,6 +223,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
   Widget _buildTextField({
+    Key? key,
     required TextEditingController controller,
     required String hint,
     required bool obscure,
@@ -224,6 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
+      key: key,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -281,11 +289,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
   Widget _buildButton(
-      {required String label, required VoidCallback? onTap}) {
+      {Key? key, required String label, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
+        key: key,
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4A80C4),
